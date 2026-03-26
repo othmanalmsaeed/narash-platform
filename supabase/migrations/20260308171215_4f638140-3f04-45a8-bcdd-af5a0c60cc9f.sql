@@ -1,0 +1,1 @@
+UPDATE public.students SET total_hours = 40, completed_hours = LEAST(completed_hours, 40);
