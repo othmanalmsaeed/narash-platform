@@ -1,0 +1,4 @@
+# Firebase App Hosting configuration
+scripts:
+  buildCommand: npm run build
+  runCommand: node index.js
