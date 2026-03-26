@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export type ViolationType = "absence" | "non_submission" | "late_submission" | "evidence_rejected";
@@ -46,7 +46,7 @@ export function usePolicyViolations() {
     queryKey: ["policy-violations", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("policy_violations")
         .select("*, students!inner(id, student_number, profiles!inner(full_name))")
         .eq("school_id", schoolId!)
@@ -69,7 +69,7 @@ export function useCreateViolation() {
       absence_count?: number;
       related_entity_id?: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("policy_violations")
         .insert({
           ...input,
@@ -95,7 +95,7 @@ export function useUpdateViolation() {
         updateData.resolved_at = new Date().toISOString();
         updateData.resolved_by = user!.id;
       }
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("policy_violations")
         .update(updateData)
         .eq("id", id)
@@ -114,7 +114,7 @@ export function useCorrectiveActions(violationId?: string) {
     queryKey: ["corrective-actions", schoolId, violationId],
     enabled: !!schoolId,
     queryFn: async () => {
-      let query = supabase
+      let query = firebaseService
         .from("corrective_action_plans")
         .select("*")
         .eq("school_id", schoolId!)
@@ -137,7 +137,7 @@ export function useCreateCorrectiveAction() {
       plan_description: string;
       deadline: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("corrective_action_plans")
         .insert({
           ...input,
@@ -157,7 +157,7 @@ export function useUpdateCorrectiveAction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; status?: CorrectiveStatus; outcome_notes?: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("corrective_action_plans")
         .update(updates)
         .eq("id", id)
@@ -176,7 +176,7 @@ export function useResubmissionRequests() {
     queryKey: ["resubmission-requests", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("resubmission_requests")
         .select("*, students!inner(id, student_number, profiles!inner(full_name))")
         .eq("school_id", schoolId!)
@@ -197,7 +197,7 @@ export function useCreateResubmission() {
       reason: string;
       new_deadline: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("resubmission_requests")
         .insert({
           ...input,
@@ -223,7 +223,7 @@ export function useUpdateResubmission() {
         updateData.reviewed_by = user!.id;
         updateData.reviewed_at = new Date().toISOString();
       }
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("resubmission_requests")
         .update(updateData)
         .eq("id", id)
@@ -243,7 +243,7 @@ export function useAbsenceViolationCheck(studentId?: string) {
     queryKey: ["absence-check", studentId, schoolId],
     enabled: !!studentId && !!schoolId,
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { count, error } = await firebaseService
         .from("attendance")
         .select("*", { count: "exact", head: true })
         .eq("student_id", studentId!)

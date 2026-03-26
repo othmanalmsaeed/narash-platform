@@ -15,7 +15,7 @@ import { SearchInput, PaginationControls, usePagination, useSearchFilter } from 
 import { GraduationCap, UserPlus, Clock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApproveGraduation } from "@/hooks/useGraduation";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -24,7 +24,7 @@ function useSchoolsList() {
   return useQuery({
     queryKey: ["schools-list"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("schools")
         .select("id, name, region")
         .eq("is_active", true)
@@ -41,7 +41,7 @@ function useAllStudents() {
     queryKey: ["admin-all-students", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("students")
         .select("id, student_number, national_id, gender, status, completed_hours, total_hours, grade_level, current_phase, final_grade, profiles!inner(full_name, phone, email)")
         .eq("school_id", schoolId!);
@@ -120,7 +120,7 @@ const AdminStudentManagement = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof form) => {
-      const { data: result, error } = await supabase.functions.invoke("create-student", {
+      const { data: result, error } = await firebaseService.functions.invoke("create-student", {
         body: data,
       });
       if (error) throw error;

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ============ Dual Assessment Data (for school supervisor) ============
@@ -33,7 +33,7 @@ export function useDualAssessments() {
     enabled: !!user,
     queryFn: async () => {
       // Get my supervised students
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id")
         .eq("school_supervisor_id", user!.id)
@@ -43,14 +43,14 @@ export function useDualAssessments() {
       const studentIds = placements.map((p) => p.student_id);
 
       // Fetch school evaluations
-      const { data: schoolEvals } = await supabase
+      const { data: schoolEvals } = await firebaseService
         .from("evaluations_school")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
         .order("date", { ascending: false });
 
       // Fetch company evaluations
-      const { data: companyEvals } = await supabase
+      const { data: companyEvals } = await firebaseService
         .from("evaluations_company")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
@@ -162,7 +162,7 @@ export function useLockDualAssessment() {
       schoolEvalId: string;
       companyEvalId: string;
     }) => {
-      const { data, error } = await supabase.rpc("lock_dual_assessment" as any, {
+      const { data, error } = await firebaseService.rpc("lock_dual_assessment" as any, {
         _student_id: input.studentId,
         _unit: input.unit,
         _school_eval_id: input.schoolEvalId,
@@ -186,13 +186,13 @@ export function useStudentAssessments() {
     queryKey: ["student-assessments", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: schoolEvals } = await supabase
+      const { data: schoolEvals } = await firebaseService
         .from("evaluations_school")
         .select("*")
         .eq("student_id", user!.id)
         .order("date", { ascending: false });
 
-      const { data: companyEvals } = await supabase
+      const { data: companyEvals } = await firebaseService
         .from("evaluations_company")
         .select("*")
         .eq("student_id", user!.id)

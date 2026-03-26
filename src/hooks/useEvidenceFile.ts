@@ -1,12 +1,12 @@
 import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { toast } from "sonner";
 
 export function useEvidenceFile() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const getSignedUrl = useCallback(async (filePath: string): Promise<string | null> => {
-    const { data, error } = await supabase.storage
+    const { data, error } = await firebaseService.storage
       .from("evidence")
       .createSignedUrl(filePath, 3600);
     if (error) {
@@ -25,7 +25,7 @@ export function useEvidenceFile() {
 
   const downloadFile = useCallback(async (filePath: string, fileName?: string) => {
     setLoading(filePath);
-    const { data, error } = await supabase.storage
+    const { data, error } = await firebaseService.storage
       .from("evidence")
       .download(filePath);
     if (error) {

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ============ Student Profile & Dashboard ============
@@ -10,7 +10,7 @@ export function useStudentProfile() {
     queryKey: ["student-profile", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("students")
         .select("*, profiles!inner(full_name, email, phone), specializations(name, sector)")
         .eq("id", user!.id)
@@ -29,7 +29,7 @@ export function useStudentAttendance() {
     queryKey: ["student-attendance", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("attendance")
         .select("*")
         .eq("student_id", user!.id)
@@ -48,7 +48,7 @@ export function useStudentDiary() {
     queryKey: ["student-diary", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("diary_entries")
         .select("*")
         .eq("student_id", user!.id)
@@ -64,7 +64,7 @@ export function useCreateDiaryEntry() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (entry: { date: string; content: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("diary_entries")
         .insert({ student_id: user!.id, school_id: schoolId!, date: entry.date, content: entry.content })
         .select()
@@ -84,7 +84,7 @@ export function useStudentJournal() {
     queryKey: ["student-journal", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("journal_entries")
         .select("*")
         .eq("student_id", user!.id)
@@ -100,7 +100,7 @@ export function useCreateJournalEntry() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (entry: { week_label: string; date: string; learned: string; challenges: string; solutions: string; goals: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("journal_entries")
         .insert({ student_id: user!.id, school_id: schoolId!, ...entry })
         .select()
@@ -120,7 +120,7 @@ export function useStudentEvidence() {
     queryKey: ["student-evidence", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evidence_records")
         .select("*")
         .eq("student_id", user!.id)
@@ -137,12 +137,12 @@ export function useUploadEvidence() {
   return useMutation({
     mutationFn: async (input: { title: string; description: string; file: File }) => {
       const filePath = `${schoolId}/${user!.id}/${Date.now()}-${input.file.name}`;
-      const { error: uploadErr } = await supabase.storage
+      const { error: uploadErr } = await firebaseService.storage
         .from("evidence")
         .upload(filePath, input.file);
       if (uploadErr) throw uploadErr;
 
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evidence_records")
         .insert({
           student_id: user!.id,

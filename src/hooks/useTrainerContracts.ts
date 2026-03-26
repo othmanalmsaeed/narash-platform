@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export type ContractStatus = "draft" | "active" | "completed" | "terminated";
@@ -25,7 +25,7 @@ export function useTrainerContracts() {
     queryKey: ["trainer-contracts", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("external_trainer_contracts")
         .select("*")
         .eq("school_id", schoolId!)
@@ -41,7 +41,7 @@ export function useCreateContract() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: ContractInput) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("external_trainer_contracts")
         .insert({
           school_id: schoolId!,
@@ -61,7 +61,7 @@ export function useUpdateContract() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string } & Partial<ContractInput & { status: ContractStatus; completed_hours: number; final_report: string; trainee_evaluation_notes: string }>) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("external_trainer_contracts")
         .update(updates)
         .eq("id", id)

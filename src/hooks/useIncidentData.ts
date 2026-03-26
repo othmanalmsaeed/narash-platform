@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 const incidentTypeLabels: Record<string, string> = {
@@ -48,7 +48,7 @@ export function useCompanyIncidents() {
     enabled: !!user,
     queryFn: async () => {
       // Get student IDs from active placements
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id, school_id")
         .eq("company_supervisor_id", user!.id)
@@ -56,7 +56,7 @@ export function useCompanyIncidents() {
       if (!placements?.length) return [];
 
       const studentIds = placements.map((p) => p.student_id);
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("training_incidents")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
@@ -81,7 +81,7 @@ export function useCreateCompanyIncident() {
       firstAidProvided?: boolean;
     }) => {
       // Get school_id from the student's active placement
-      const { data: placement, error: placementError } = await supabase
+      const { data: placement, error: placementError } = await firebaseService
         .from("placements")
         .select("school_id")
         .eq("company_supervisor_id", user!.id)
@@ -90,7 +90,7 @@ export function useCreateCompanyIncident() {
         .single();
       if (placementError || !placement) throw new Error("لا يوجد توزيع نشط لهذا الطالب");
 
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("training_incidents")
         .insert({
           student_id: input.studentId,
@@ -132,7 +132,7 @@ export function useUpdateIncidentStatus() {
         updateData.resolved_at = new Date().toISOString();
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("training_incidents")
         .update(updateData)
         .eq("id", input.incidentId)
@@ -157,7 +157,7 @@ export function useSchoolIncidents() {
     queryKey: ["school-incidents", schoolId],
     enabled: !!user && !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("training_incidents")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("school_id", schoolId!)
@@ -176,7 +176,7 @@ export function useAdminIncidents() {
     queryKey: ["admin-incidents", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("training_incidents")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("school_id", schoolId!)
