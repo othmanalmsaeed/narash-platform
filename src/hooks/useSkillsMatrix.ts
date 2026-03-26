@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useSkillsMatrix(sector?: string) {
   return useQuery({
     queryKey: ["skills-matrix", sector],
     queryFn: async () => {
-      let query = supabase
+      let query = firebaseService
         .from("pathway_skills_matrix")
         .select("*")
         .order("objective_number", { ascending: true });
@@ -24,7 +24,7 @@ export function useSelectedObjectives(cycleYear?: number) {
     queryKey: ["selected-objectives", schoolId, cycleYear],
     enabled: !!schoolId,
     queryFn: async () => {
-      let query = supabase
+      let query = firebaseService
         .from("school_selected_objectives")
         .select("*, pathway_skills_matrix(*)")
         .eq("school_id", schoolId!);
@@ -41,7 +41,7 @@ export function useSelectObjective() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { objectiveId: string; cycleYear: number }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("school_selected_objectives")
         .insert({
           school_id: schoolId!,
@@ -62,7 +62,7 @@ export function useDeselectObjective() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await firebaseService
         .from("school_selected_objectives")
         .delete()
         .eq("id", id);

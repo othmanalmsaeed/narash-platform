@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Camera, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 
 const Profile = () => {
   const { user, fullName: authFullName } = useAuth();
@@ -22,7 +22,7 @@ const Profile = () => {
   useEffect(() => {
     if (!user) return;
     const loadProfile = async () => {
-      const { data } = await supabase
+      const { data } = await firebaseService
         .from("profiles")
         .select("full_name, email, phone, avatar_url")
         .eq("id", user.id)
@@ -44,7 +44,7 @@ const Profile = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
+    const { error } = await firebaseService
       .from("profiles")
       .update({ full_name: name.trim(), phone: phone.trim() || null })
       .eq("id", user.id);
@@ -61,7 +61,7 @@ const Profile = () => {
     if (!file || !user) return;
     const ext = file.name.split(".").pop();
     const path = `avatars/${user.id}.${ext}`;
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await firebaseService.storage
       .from("evidence")
       .upload(path, file, { upsert: true });
     if (uploadError) {
@@ -69,14 +69,14 @@ const Profile = () => {
       return;
     }
     // Use signed URL since bucket is private
-    const { data: signedData, error: signedError } = await supabase.storage
+    const { data: signedData, error: signedError } = await firebaseService.storage
       .from("evidence")
       .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year validity
     if (signedError || !signedData?.signedUrl) {
       toast.error("فشل الحصول على رابط الصورة");
       return;
     }
-    await supabase.from("profiles").update({ avatar_url: signedData.signedUrl }).eq("id", user.id);
+    await firebaseService.from("profiles").update({ avatar_url: signedData.signedUrl }).eq("id", user.id);
     setAvatarUrl(signedData.signedUrl);
     toast.success("تم تغيير الصورة الشخصية 📷");
   };

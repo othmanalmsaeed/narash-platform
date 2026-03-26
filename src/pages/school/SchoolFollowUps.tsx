@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useFollowUpVisits, useCreateFollowUp } from "@/hooks/useFollowUps";
 import { useSchoolStudents } from "@/hooks/useSchoolData";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 const visitTypeLabels: Record<string, string> = {
@@ -38,7 +38,7 @@ const SchoolFollowUps = () => {
     queryKey: ["school-active-placements", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("placements")
         .select("id, student_id, status, students!inner(id, profiles!inner(full_name)), companies!inner(name)")
         .eq("school_supervisor_id", user!.id)

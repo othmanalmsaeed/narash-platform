@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useApproveGraduation() {
@@ -8,13 +8,13 @@ export function useApproveGraduation() {
   return useMutation({
     mutationFn: async (studentId: string) => {
       // Calculate final grade via DB function
-      const { data: gradeData, error: gradeErr } = await supabase
+      const { data: gradeData, error: gradeErr } = await firebaseService
         .rpc("calc_final_grade", { _student_id: studentId });
       if (gradeErr) throw gradeErr;
 
       const finalGrade = gradeData ?? "P";
 
-      const { error } = await supabase
+      const { error } = await firebaseService
         .from("students")
         .update({
           status: "graduated" as any,

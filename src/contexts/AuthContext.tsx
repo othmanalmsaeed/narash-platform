@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import { firebaseService } from "@/integrations/firebase/client";
+import type { User } from "@/integrations/firebase/client";
 
 export type AppRole = "student" | "company_supervisor" | "school_supervisor" | "admin" | "regional" | "ministry";
 
 interface AuthState {
   user: User | null;
-  session: Session | null;
+  session: { user: User } | null;
   role: AppRole | null;
   schoolId: string | null;
   fullName: string;
@@ -48,13 +48,13 @@ export const roleLabelMap: Record<AppRole, string> = {
 };
 
 async function fetchUserMeta(userId: string) {
-  const { data: roleData } = await supabase
+  const { data: roleData } = await firebaseService
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
     .maybeSingle();
 
-  const { data: profileData } = await supabase
+  const { data: profileData } = await firebaseService
     .from("profiles")
     .select("school_id, full_name")
     .eq("id", userId)
@@ -69,7 +69,7 @@ async function fetchUserMeta(userId: string) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<{ user: User } | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [schoolId, setSchoolId] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
@@ -77,13 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Set up listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = firebaseService.auth.onAuthStateChange(
       async (event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Use setTimeout to avoid Supabase deadlock during auth callback
+          // Use setTimeout to avoid auth callback race conditions
           setTimeout(async () => {
             const meta = await fetchUserMeta(newSession.user.id);
             setRole(meta.role);
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check existing session
-    supabase.auth.getSession().then(async ({ data: { session: existing } }) => {
+    firebaseService.auth.getSession().then(async ({ data: { session: existing } }) => {
       setSession(existing);
       setUser(existing?.user ?? null);
       if (existing?.user) {
@@ -117,12 +117,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await firebaseService.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await firebaseService.auth.signOut();
   };
 
   return (

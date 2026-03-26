@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export type CrossTrainingStatus = "pending" | "approved_source" | "approved_destination" | "fully_approved" | "rejected" | "completed";
@@ -10,7 +10,7 @@ export function useCrossTrainingSchools(cycleYear: number) {
     queryKey: ["cross-training-schools", schoolId, cycleYear],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_cross_training_schools", {
+      const { data, error } = await firebaseService.rpc("get_cross_training_schools", {
         _student_school_id: schoolId!,
         _cycle_year: cycleYear,
       });
@@ -26,7 +26,7 @@ export function useCrossTrainingRequests() {
     queryKey: ["cross-training-requests", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("cross_school_training_requests")
         .select("*, pathway_skills_matrix!inner(objective_title, sector, objective_number), source_school:schools!cross_school_training_requests_source_school_id_fkey(name, region), destination_school:schools!cross_school_training_requests_destination_school_id_fkey(name, region)")
         .order("created_at", { ascending: false });
@@ -45,7 +45,7 @@ export function useCreateCrossTrainingRequest() {
       objective_id: string;
       reason: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("cross_school_training_requests")
         .insert({
           student_id: user!.id,
@@ -82,7 +82,7 @@ export function useUpdateCrossTrainingRequest() {
 
       // Check if both approvals complete
       if (action === "approve_source") {
-        const { data: existing } = await supabase
+        const { data: existing } = await firebaseService
           .from("cross_school_training_requests")
           .select("destination_approved_by")
           .eq("id", id)
@@ -91,7 +91,7 @@ export function useUpdateCrossTrainingRequest() {
           updates.status = "fully_approved";
         }
       } else if (action === "approve_destination") {
-        const { data: existing } = await supabase
+        const { data: existing } = await firebaseService
           .from("cross_school_training_requests")
           .select("source_approved_by")
           .eq("id", id)
@@ -101,7 +101,7 @@ export function useUpdateCrossTrainingRequest() {
         }
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("cross_school_training_requests")
         .update(updates)
         .eq("id", id)

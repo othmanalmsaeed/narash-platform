@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useFollowUpVisits() {
@@ -8,7 +8,7 @@ export function useFollowUpVisits() {
     queryKey: ["follow-up-visits", schoolId],
     enabled: !!user && !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("follow_up_visits")
         .select("*, students!inner(id, profiles!inner(full_name)), placements!inner(start_date, companies!inner(name))")
         .eq("school_id", schoolId!)
@@ -30,7 +30,7 @@ export function useCreateFollowUp() {
       visit_date: string;
       notes: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("follow_up_visits")
         .insert({
           ...input,

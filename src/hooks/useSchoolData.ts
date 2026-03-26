@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ============ My Students (via active placements as school supervisor) ============
@@ -10,7 +10,7 @@ export function useSchoolStudents() {
     queryKey: ["school-students", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("placements")
         .select("id, student_id, students(id, student_number, status, completed_hours, total_hours, profiles!inner(full_name))")
         .eq("school_supervisor_id", user!.id)
@@ -34,7 +34,7 @@ export function useSchoolObservations() {
     queryKey: ["school-observations", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("observations")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("observer_id", user!.id)
@@ -60,7 +60,7 @@ export function useCreateObservation() {
       evidence: string;
       recommendations: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("observations")
         .insert({
           student_id: input.studentId,
@@ -89,7 +89,7 @@ export function useSchoolAssessments() {
     queryKey: ["school-assessments", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evaluations_school")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("evaluator_id", user!.id)
@@ -114,7 +114,7 @@ export function useCreateAssessment() {
       notes: string;
       date: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evaluations_school")
         .insert({
           student_id: input.studentId,
@@ -143,7 +143,7 @@ export function useSchoolEvidence() {
     enabled: !!user,
     queryFn: async () => {
       // Get students supervised by this user
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id")
         .eq("school_supervisor_id", user!.id)
@@ -151,7 +151,7 @@ export function useSchoolEvidence() {
       if (!placements?.length) return [];
 
       const studentIds = placements.map((p) => p.student_id);
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evidence_records")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
@@ -174,7 +174,7 @@ export function useReviewEvidence() {
       status: "approved" | "rejected";
       feedback?: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evidence_records")
         .update({
           status: input.status,
@@ -200,7 +200,7 @@ export function useSchoolLearningGoals() {
     queryKey: ["school-learning-goals", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id")
         .eq("school_supervisor_id", user!.id)
@@ -208,7 +208,7 @@ export function useSchoolLearningGoals() {
       if (!placements?.length) return [];
 
       const studentIds = placements.map((p) => p.student_id);
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("learning_goals")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
@@ -227,7 +227,7 @@ export function useCreateLearningGoals() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { studentId: string; goals: string[]; date: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("learning_goals")
         .insert({
           student_id: input.studentId,
@@ -252,7 +252,7 @@ export function useSchoolJournals() {
     queryKey: ["school-journals", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id")
         .eq("school_supervisor_id", user!.id)
@@ -260,7 +260,7 @@ export function useSchoolJournals() {
       if (!placements?.length) return [];
 
       const studentIds = placements.map((p) => p.student_id);
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("journal_entries")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
@@ -280,7 +280,7 @@ export function useSchoolDiaries() {
     queryKey: ["school-diaries", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id")
         .eq("school_supervisor_id", user!.id)
@@ -288,7 +288,7 @@ export function useSchoolDiaries() {
       if (!placements?.length) return [];
 
       const studentIds = placements.map((p) => p.student_id);
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("diary_entries")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
@@ -308,7 +308,7 @@ export function useSchoolWitness() {
     queryKey: ["school-witness", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id")
         .eq("school_supervisor_id", user!.id)
@@ -316,7 +316,7 @@ export function useSchoolWitness() {
       if (!placements?.length) return [];
 
       const studentIds = placements.map((p) => p.student_id);
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("witness_statements")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
@@ -336,7 +336,7 @@ export function useSchoolCompanyEvals() {
     queryKey: ["school-company-evals", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id")
         .eq("school_supervisor_id", user!.id)
@@ -344,7 +344,7 @@ export function useSchoolCompanyEvals() {
       if (!placements?.length) return [];
 
       const studentIds = placements.map((p) => p.student_id);
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evaluations_company")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
