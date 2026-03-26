@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ============ Admin Stats ============
@@ -10,7 +10,7 @@ export function useAdminStats() {
     queryKey: ["admin-stats", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data: students, error } = await supabase
+      const { data: students, error } = await firebaseService
         .from("students")
         .select("id, status, completed_hours, total_hours")
         .eq("school_id", schoolId!);
@@ -21,7 +21,7 @@ export function useAdminStats() {
       const completed = all.filter((s) => s.status === "completed").length;
 
       // unmatched = students without an active placement
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id")
         .eq("school_id", schoolId!)
@@ -42,14 +42,14 @@ export function useAdminStudents() {
     queryKey: ["admin-students", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("students")
         .select("id, student_number, national_id, gender, status, completed_hours, total_hours, profiles!inner(full_name, phone)")
         .eq("school_id", schoolId!);
       if (error) throw error;
 
       // Get placements for company & supervisor info
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("student_id, companies(name), profiles!placements_school_supervisor_id_fkey(full_name)")
         .eq("school_id", schoolId!)
@@ -97,7 +97,7 @@ export function useAdminAttendance() {
     queryKey: ["admin-attendance", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("attendance")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("school_id", schoolId!)
@@ -133,7 +133,7 @@ export function useAdminWitness() {
     queryKey: ["admin-witness", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("witness_statements")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("school_id", schoolId!)
@@ -162,7 +162,7 @@ export function useAdminEvaluations() {
     queryKey: ["admin-evaluations", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evaluations_company")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("school_id", schoolId!)
@@ -188,7 +188,7 @@ export function useAdminObservations() {
     queryKey: ["admin-observations", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("observations")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("school_id", schoolId!)
@@ -241,7 +241,7 @@ export function useAdminPlacements() {
     queryKey: ["admin-placements", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("placements")
         .select(`
           id, status, start_date, student_id,
@@ -280,7 +280,7 @@ export function useAdminCapacity() {
     queryKey: ["admin-capacity", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data: companies, error } = await supabase
+      const { data: companies, error } = await firebaseService
         .from("companies")
         .select("id, name, capacity")
         .eq("school_id", schoolId!)
@@ -288,7 +288,7 @@ export function useAdminCapacity() {
       if (error) throw error;
 
       // Count active placements per company
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("company_id")
         .eq("school_id", schoolId!)
@@ -321,12 +321,12 @@ export function useAdminSectors() {
     queryKey: ["admin-sectors", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data: specs, error } = await supabase
+      const { data: specs, error } = await firebaseService
         .from("specializations")
         .select("id, name, sector");
       if (error) throw error;
 
-      const { data: students } = await supabase
+      const { data: students } = await firebaseService
         .from("students")
         .select("id, specialization_id")
         .eq("school_id", schoolId!);
@@ -367,7 +367,7 @@ export function useAdminCompanies() {
     queryKey: ["admin-companies", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("companies")
         .select("*")
         .eq("school_id", schoolId!)
@@ -386,7 +386,7 @@ export function useAdminAuditLogs() {
     queryKey: ["admin-audit-logs", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("audit_logs")
         .select("*")
         .eq("school_id", schoolId!)
@@ -419,7 +419,7 @@ export function useAdminRisks() {
       }> = [];
 
       // 1. Students with high absence
-      const { data: attendance } = await supabase
+      const { data: attendance } = await firebaseService
         .from("attendance")
         .select("student_id, status, date, students!inner(profiles!inner(full_name))")
         .eq("school_id", schoolId!);
@@ -450,13 +450,13 @@ export function useAdminRisks() {
       });
 
       // 2. Companies over capacity
-      const { data: companies } = await supabase
+      const { data: companies } = await firebaseService
         .from("companies")
         .select("id, name, capacity")
         .eq("school_id", schoolId!)
         .eq("is_active", true);
 
-      const { data: activePlacements } = await supabase
+      const { data: activePlacements } = await firebaseService
         .from("placements")
         .select("company_id")
         .eq("school_id", schoolId!)
@@ -485,13 +485,13 @@ export function useAdminRisks() {
       });
 
       // 3. Students without evidence
-      const { data: students } = await supabase
+      const { data: students } = await firebaseService
         .from("students")
         .select("id, profiles!inner(full_name)")
         .eq("school_id", schoolId!)
         .eq("status", "training");
 
-      const { data: evidenceRecords } = await supabase
+      const { data: evidenceRecords } = await firebaseService
         .from("evidence_records")
         .select("student_id")
         .eq("school_id", schoolId!);
@@ -527,7 +527,7 @@ export function useAdminAssurance() {
     enabled: !!schoolId,
     queryFn: async () => {
       // Companies
-      const { data: companies } = await supabase
+      const { data: companies } = await firebaseService
         .from("companies")
         .select("id, capacity, is_active, accreditation_status")
         .eq("school_id", schoolId!);
@@ -537,7 +537,7 @@ export function useAdminAssurance() {
       const approvedCompanies = (companies ?? []).filter((c) => c.accreditation_status === "approved").length;
 
       // Students
-      const { data: students } = await supabase
+      const { data: students } = await firebaseService
         .from("students")
         .select("id, status")
         .eq("school_id", schoolId!);
@@ -547,7 +547,7 @@ export function useAdminAssurance() {
       const completedStudents = (students ?? []).filter((s) => s.status === "completed").length;
 
       // Placements
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("id, status")
         .eq("school_id", schoolId!);
@@ -555,7 +555,7 @@ export function useAdminAssurance() {
       const activePlacements = (placements ?? []).filter((p) => p.status === "active").length;
 
       // Attendance compliance
-      const { data: attendance } = await supabase
+      const { data: attendance } = await firebaseService
         .from("attendance")
         .select("status")
         .eq("school_id", schoolId!);
@@ -622,7 +622,7 @@ export function useAdminProgramCycles() {
     queryKey: ["admin-program-cycles", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("program_cycles" as any)
         .select("*")
         .eq("school_id", schoolId!)
@@ -646,7 +646,7 @@ export function useCreateProgramCycle() {
       assessment_windows: ScheduleWindow[];
       reporting_deadlines: ReportingDeadline[];
     }) => {
-      const { error } = await supabase
+      const { error } = await firebaseService
         .from("program_cycles" as any)
         .insert({ ...cycle, school_id: schoolId! } as any);
       if (error) throw error;
@@ -663,7 +663,7 @@ export function useAdminQualificationMappings() {
     queryKey: ["admin-qualification-mappings", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("qualification_mappings" as any)
         .select("*")
         .eq("school_id", schoolId!)
@@ -694,7 +694,7 @@ export function useAdminProgramAuthorizations() {
     queryKey: ["admin-program-authorizations", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("program_authorizations" as any)
         .select("*")
         .eq("school_id", schoolId!)
@@ -724,7 +724,7 @@ export function useAdminProgramRisks() {
     queryKey: ["admin-program-risks", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("program_risks" as any)
         .select("*")
         .eq("school_id", schoolId!)
@@ -801,7 +801,7 @@ export function useAdminNewFeatureStats() {
     enabled: !!schoolId,
     queryFn: async () => {
       // Policy violations
-      const { data: violations } = await supabase
+      const { data: violations } = await firebaseService
         .from("policy_violations")
         .select("id, status, severity, violation_type")
         .eq("school_id", schoolId!);
@@ -823,7 +823,7 @@ export function useAdminNewFeatureStats() {
       };
 
       // Trainer contracts
-      const { data: contracts } = await supabase
+      const { data: contracts } = await firebaseService
         .from("external_trainer_contracts")
         .select("id, status, completed_hours, total_hours, financial_amount")
         .eq("school_id", schoolId!);
@@ -836,7 +836,7 @@ export function useAdminNewFeatureStats() {
       const totalFinancial = (contracts ?? []).reduce((s, c) => s + (Number(c.financial_amount) || 0), 0);
 
       // Skills matrix selections
-      const { data: selections } = await supabase
+      const { data: selections } = await firebaseService
         .from("school_selected_objectives")
         .select("id, objective_id, pathway_skills_matrix!inner(sector)")
         .eq("school_id", schoolId!);
@@ -849,7 +849,7 @@ export function useAdminNewFeatureStats() {
       });
 
       // Cross-school training
-      const { data: crossRequests } = await supabase
+      const { data: crossRequests } = await firebaseService
         .from("cross_school_training_requests")
         .select("id, status")
         .or(`source_school_id.eq.${schoolId},destination_school_id.eq.${schoolId}`);
@@ -859,7 +859,7 @@ export function useAdminNewFeatureStats() {
       const totalCross = (crossRequests ?? []).length;
 
       // Corrective actions
-      const { data: correctiveActions } = await supabase
+      const { data: correctiveActions } = await firebaseService
         .from("corrective_action_plans")
         .select("id, status")
         .eq("school_id", schoolId!);
@@ -867,7 +867,7 @@ export function useAdminNewFeatureStats() {
       const activeCorrective = (correctiveActions ?? []).filter(a => a.status === "pending" || a.status === "in_progress").length;
 
       // Resubmissions
-      const { data: resubmissions } = await supabase
+      const { data: resubmissions } = await firebaseService
         .from("resubmission_requests")
         .select("id, status")
         .eq("school_id", schoolId!);

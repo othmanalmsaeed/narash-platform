@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useRegionalSchools() {
@@ -9,7 +9,7 @@ export function useRegionalSchools() {
     enabled: !!user,
     queryFn: async () => {
       // Get user's school to determine region
-      const { data: profile } = await supabase
+      const { data: profile } = await firebaseService
         .from("profiles")
         .select("school_id")
         .eq("id", user!.id)
@@ -17,7 +17,7 @@ export function useRegionalSchools() {
 
       if (!profile?.school_id) return { schools: [], region: "" };
 
-      const { data: mySchool } = await supabase
+      const { data: mySchool } = await firebaseService
         .from("schools")
         .select("region")
         .eq("id", profile.school_id)
@@ -25,7 +25,7 @@ export function useRegionalSchools() {
 
       if (!mySchool?.region) return { schools: [], region: "" };
 
-      const { data: schools } = await supabase
+      const { data: schools } = await firebaseService
         .from("schools")
         .select("*")
         .eq("region", mySchool.region)
@@ -43,7 +43,7 @@ export function useRegionalCompanies() {
     queryKey: ["regional-companies", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await firebaseService
         .from("companies")
         .select("*")
         .order("name");
@@ -58,7 +58,7 @@ export function useRegionalPlacements() {
     queryKey: ["regional-placements", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await firebaseService
         .from("placements")
         .select("*, students!inner(id, student_number, status, profiles:profiles!inner(full_name)), companies!inner(name)")
         .order("created_at", { ascending: false });
@@ -73,7 +73,7 @@ export function useRegionalStudents() {
     queryKey: ["regional-students", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await firebaseService
         .from("students")
         .select("*, profiles:profiles!inner(full_name)")
         .order("created_at", { ascending: false });
@@ -88,7 +88,7 @@ export function useRegionalRisks() {
     queryKey: ["regional-risks", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await firebaseService
         .from("program_risks")
         .select("*")
         .in("status", ["Open", "Mitigating"])

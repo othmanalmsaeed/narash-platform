@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { GraduationCap, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const ResetPassword = () => {
     }
 
     // Listen for auth state change with recovery event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = firebaseService.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecovery(true);
       }
@@ -44,7 +44,7 @@ const ResetPassword = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await firebaseService.auth.updateUser({ password });
     setLoading(false);
     if (error) {
       toast.error(error.message);

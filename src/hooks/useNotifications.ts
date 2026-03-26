@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 
@@ -22,7 +22,7 @@ export function useNotifications() {
   const query = useQuery({
     queryKey: ["notifications", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("notifications")
         .select("*")
         .order("created_at", { ascending: false })
@@ -36,7 +36,7 @@ export function useNotifications() {
   // Realtime subscription
   useEffect(() => {
     if (!user?.id) return;
-    const channel = supabase
+    const channel = firebaseService
       .channel("notifications-realtime")
       .on(
         "postgres_changes",
@@ -52,7 +52,7 @@ export function useNotifications() {
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { firebaseService.removeChannel(channel); };
   }, [user?.id, queryClient]);
 
   const unreadCount = query.data?.filter((n) => !n.is_read).length ?? 0;
@@ -66,7 +66,7 @@ export function useMarkAsRead() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await firebaseService
         .from("notifications")
         .update({ is_read: true })
         .eq("id", id);
@@ -84,7 +84,7 @@ export function useMarkAllAsRead() {
 
   return useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
+      const { error } = await firebaseService
         .from("notifications")
         .update({ is_read: true })
         .eq("is_read", false);

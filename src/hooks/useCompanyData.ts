@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ============ My Students (via active placements) ============
@@ -10,7 +10,7 @@ export function useMyStudents() {
     queryKey: ["company-students", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("placements")
         .select("id, student_id, students(id, student_number, status, completed_hours, total_hours, profiles!inner(full_name))")
         .eq("company_supervisor_id", user!.id)
@@ -37,7 +37,7 @@ export function useCompanyAttendance() {
     enabled: !!user,
     queryFn: async () => {
       // Get placements first, then attendance for those students
-      const { data: placements } = await supabase
+      const { data: placements } = await firebaseService
         .from("placements")
         .select("id, student_id")
         .eq("company_supervisor_id", user!.id)
@@ -45,7 +45,7 @@ export function useCompanyAttendance() {
       if (!placements?.length) return [];
 
       const studentIds = placements.map((p) => p.student_id);
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("attendance")
         .select("*, students!inner(profiles!inner(full_name))")
         .in("student_id", studentIds)
@@ -71,7 +71,7 @@ export function useRecordAttendance() {
       exitTime: string;
       status: "present" | "absent" | "late" | "early_leave" | "excused";
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("attendance")
         .insert({
           student_id: input.studentId,
@@ -100,7 +100,7 @@ export function useCompanyWitness() {
     queryKey: ["company-witness", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("witness_statements")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("company_supervisor_id", user!.id)
@@ -127,7 +127,7 @@ export function useCreateWitness() {
       gradeD: boolean;
       date: string;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("witness_statements")
         .insert({
           student_id: input.studentId,
@@ -157,7 +157,7 @@ export function useCompanyEvaluations() {
     queryKey: ["company-evaluations", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evaluations_company")
         .select("*, students!inner(profiles!inner(full_name))")
         .eq("evaluator_id", user!.id)
@@ -176,7 +176,7 @@ export function useCreateEvaluation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { studentId: string; rating: number; comment: string; date: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("evaluations_company")
         .insert({
           student_id: input.studentId,
@@ -202,7 +202,7 @@ export function useCompanyChecklist(studentId: string | undefined) {
     queryKey: ["company-checklist", studentId],
     enabled: !!studentId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("checklist_records")
         .select("*")
         .eq("student_id", studentId!)
@@ -223,7 +223,7 @@ export function useUpsertChecklist() {
       skillCategory: string;
       checked: boolean;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await firebaseService
         .from("checklist_records")
         .upsert(
           {

@@ -11,7 +11,7 @@ import pearsonLogo from "@/assets/pearson-logo-2025.png";
 import moeLogo from "@/assets/moe-logo.png";
 import moeLogoDark from "@/assets/moe-logo-dark.png";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseService } from "@/integrations/firebase/client";
 import { motion, useReducedMotion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -398,7 +398,7 @@ function ForgotPasswordForm({ onBack, isDark, reduceMotion }: { onBack: () => vo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await firebaseService.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
